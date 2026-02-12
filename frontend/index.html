@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Data Entry Validation System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <h1>Smart Data Entry</h1>
+            <p class="subtitle">Real-Time Validation Form</p>
+
+            <form id="dataForm">
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name">
+                    <small class="error" id="nameError"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="example@email.com">
+                    <small class="error" id="emailError"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="text" id="phone" name="phone" placeholder="10-digit phone number">
+                    <small class="error" id="phoneError"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter secure password">
+                    <small class="error" id="passwordError"></small>
+                </div>
+
+                <button type="submit" class="btn">Submit</button>
+
+                <p class="success-message" id="successMessage"></p>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="js/validation.js"></script>
+</body>
+</html>
