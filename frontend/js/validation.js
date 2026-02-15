@@ -1,4 +1,5 @@
-document.getElementById("dataForm").addEventListener("submit", function (e) {
+document.getElementById("dataForm").addEventListener("submit", async function (e) {
+ {
     e.preventDefault();
 
     let isValid = true;
@@ -88,7 +89,35 @@ document.getElementById("dataForm").addEventListener("submit", function (e) {
     // FINAL RESULT
     // ===============================
     if (isValid) {
-        successMessage.textContent = "Smart Validation Successful ✔";
-        successMessage.style.color = "#16a34a";
+    try {
+        const response = await fetch("http://localhost:5000/api/validation", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: nameValue,
+                email: emailValue,
+                phone: phoneValue,
+                password: passwordValue
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            successMessage.textContent = "Smart Validation Successful ✔ Data Saved!";
+            successMessage.style.color = "#16a34a";
+            document.getElementById("dataForm").reset();
+        } else {
+            successMessage.textContent = data.message || "Server Error";
+            successMessage.style.color = "red";
+        }
+
+    } catch (error) {
+        successMessage.textContent = "Backend not running!";
+        successMessage.style.color = "red";
     }
+}
+
 });
