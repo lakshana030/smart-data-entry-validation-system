@@ -90,7 +90,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     // ===============================
     if (isValid) {
     try {
-        const response = await fetch("http://localhost:5000/api/validation", {
+        const response = await fetch("http://localhost:5000/api/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
