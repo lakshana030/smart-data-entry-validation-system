@@ -1,4 +1,8 @@
-let users = [];   
+// ===============================
+// FRONTEND STATE
+// ===============================
+let users = [];
+
 let formData = {
     name: "",
     email: "",
@@ -6,6 +10,9 @@ let formData = {
     password: ""
 };
 
+// ===============================
+// FORM SUBMIT
+// ===============================
 document.getElementById("dataForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -22,7 +29,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     const passwordError = document.getElementById("passwordError");
     const successMessage = document.getElementById("successMessage");
 
-    // Reset Errors
+    // Reset errors
     nameError.textContent = "";
     emailError.textContent = "";
     phoneError.textContent = "";
@@ -38,7 +45,6 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     nameInput.value = nameValue;
 
     const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
-
     if (!namePattern.test(nameValue)) {
         nameError.textContent = "Name should contain only letters and single spaces";
         nameInput.classList.add("error-border");
@@ -47,18 +53,16 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
 
     const emailValue = emailInput.value.trim();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailPattern.test(emailValue) || emailValue.includes("..")) {
-        emailError.textContent = "Enter a valid professional email address";
+        emailError.textContent = "Enter valid email";
         emailInput.classList.add("error-border");
         isValid = false;
     }
+
     const phoneValue = phoneInput.value.trim();
     const phonePattern = /^[6-9]\d{9}$/;
-
     if (!phonePattern.test(phoneValue)) {
-        phoneError.textContent =
-            "Phone must be 10 digits and start with 6, 7, 8, or 9";
+        phoneError.textContent = "Phone must be 10 digits starting 6-9";
         phoneInput.classList.add("error-border");
         isValid = false;
     }
@@ -68,15 +72,13 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
     if (!passwordPattern.test(passwordValue)) {
-        passwordError.textContent =
-            "Password must contain 8+ chars, uppercase, lowercase, number & special character";
+        passwordError.textContent = "Weak password format";
         passwordInput.classList.add("error-border");
         isValid = false;
     }
 
     if (isValid) {
 
-        // Update frontend state
         formData = {
             name: nameValue,
             email: emailValue,
@@ -87,24 +89,19 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         try {
             const response = await fetch("http://localhost:5000/api/register", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                successMessage.textContent = "Smart Validation Successful ✔ Data Saved!";
-                successMessage.style.color = "#16a34a";
+                successMessage.textContent = "Data Saved Successfully ✔";
+                successMessage.style.color = "green";
                 document.getElementById("dataForm").reset();
-
-                // Reload users (sync state with backend)
-                loadUsers();
-
+                loadUsers();  // refresh users
             } else {
-                successMessage.textContent = data.message || "Server Error";
+                successMessage.textContent = data.message;
                 successMessage.style.color = "red";
             }
 
@@ -115,14 +112,27 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     }
 });
 
+// ===============================
+// LOAD USERS (WITH TOKEN)
+// ===============================
 loadUsers();
 
 async function loadUsers() {
     try {
-        const response = await fetch("http://localhost:5000/api/users");
+        const token = localStorage.getItem("token");
 
-        users = await response.json();   // Update state
+        if (!token) {
+            console.log("Login required to fetch users");
+            return;
+        }
 
+        const response = await fetch("http://localhost:5000/api/users", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        users = await response.json();
         displayUsers();
 
     } catch (error) {
@@ -130,6 +140,9 @@ async function loadUsers() {
     }
 }
 
+// ===============================
+// DISPLAY USERS
+// ===============================
 function displayUsers() {
     const container = document.getElementById("usersList");
     container.innerHTML = "";
@@ -138,26 +151,37 @@ function displayUsers() {
         container.innerHTML += `
             <div>
                 <p>${user.name} - ${user.email} - ${user.phone}</p>
-                <button onclick="updateUser('${user._id}')">Update</button>
-                <button onclick="deleteUser('${user._id}')">Delete</button>
+                <button onclick="updateUser(${user.id})">Update</button>
+                <button onclick="deleteUser(${user.id})">Delete</button>
             </div>
         `;
     });
 }
 
+// ===============================
+// DELETE USER
+// ===============================
 async function deleteUser(id) {
     try {
+        const token = localStorage.getItem("token");
+
         await fetch(`http://localhost:5000/api/users/${id}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
         });
 
-        loadUsers();  // Refresh state
+        loadUsers();
 
     } catch (error) {
         console.log(error);
     }
 }
 
+// ===============================
+// UPDATE USER
+// ===============================
 async function updateUser(id) {
 
     const newName = prompt("Enter new name:");
@@ -165,10 +189,13 @@ async function updateUser(id) {
     const newPhone = prompt("Enter new phone:");
 
     try {
+        const token = localStorage.getItem("token");
+
         await fetch(`http://localhost:5000/api/users/${id}`, {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
             },
             body: JSON.stringify({
                 name: newName,
@@ -177,7 +204,7 @@ async function updateUser(id) {
             })
         });
 
-        loadUsers();  // Refresh state
+        loadUsers();
 
     } catch (error) {
         console.log(error);
