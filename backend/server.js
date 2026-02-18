@@ -116,6 +116,54 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 });
+// ============================
+// ✏️ UPDATE USER
+// ============================
+app.put("/api/users/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone } = req.body;
+
+    const updatedUser = await pool.query(
+      "UPDATE data_entries SET name=$1, email=$2, phone=$3 WHERE id=$4 RETURNING id, name, email, phone",
+      [name, email, phone, id]
+    );
+
+    if (updatedUser.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser.rows[0],
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+// ============================
+// ❌ DELETE USER
+// ============================
+app.delete("/api/users/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUser = await pool.query(
+      "DELETE FROM data_entries WHERE id=$1 RETURNING id",
+      [id]
+    );
+
+    if (deletedUser.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
 
 // ============================
 // 🚀 SERVER START

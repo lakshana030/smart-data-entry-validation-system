@@ -1,5 +1,12 @@
+let users = [];   
+let formData = {
+    name: "",
+    email: "",
+    phone: "",
+    password: ""
+};
+
 document.getElementById("dataForm").addEventListener("submit", async function (e) {
- {
     e.preventDefault();
 
     let isValid = true;
@@ -15,7 +22,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     const passwordError = document.getElementById("passwordError");
     const successMessage = document.getElementById("successMessage");
 
-    // Reset
+    // Reset Errors
     nameError.textContent = "";
     emailError.textContent = "";
     phoneError.textContent = "";
@@ -26,12 +33,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         input.classList.remove("error-border");
     });
 
-    // ===============================
-    // SMART NAME VALIDATION
-    // ===============================
     let nameValue = nameInput.value.trim();
-
-    // Auto capitalize first letter
     nameValue = nameValue.replace(/\b\w/g, char => char.toUpperCase());
     nameInput.value = nameValue;
 
@@ -43,11 +45,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         isValid = false;
     }
 
-    // ===============================
-    // SMART EMAIL VALIDATION
-    // ===============================
     const emailValue = emailInput.value.trim();
-
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(emailValue) || emailValue.includes("..")) {
@@ -55,12 +53,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         emailInput.classList.add("error-border");
         isValid = false;
     }
-
-    // ===============================
-    // SMART PHONE VALIDATION
-    // ===============================
     const phoneValue = phoneInput.value.trim();
-
     const phonePattern = /^[6-9]\d{9}$/;
 
     if (!phonePattern.test(phoneValue)) {
@@ -70,11 +63,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         isValid = false;
     }
 
-    // ===============================
-    // SMART PASSWORD VALIDATION
-    // ===============================
     const passwordValue = passwordInput.value.trim();
-
     const passwordPattern =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
@@ -85,39 +74,112 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         isValid = false;
     }
 
-    // ===============================
-    // FINAL RESULT
-    // ===============================
     if (isValid) {
+
+        // Update frontend state
+        formData = {
+            name: nameValue,
+            email: emailValue,
+            phone: phoneValue,
+            password: passwordValue
+        };
+
+        try {
+            const response = await fetch("http://localhost:5000/api/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                successMessage.textContent = "Smart Validation Successful ✔ Data Saved!";
+                successMessage.style.color = "#16a34a";
+                document.getElementById("dataForm").reset();
+
+                // Reload users (sync state with backend)
+                loadUsers();
+
+            } else {
+                successMessage.textContent = data.message || "Server Error";
+                successMessage.style.color = "red";
+            }
+
+        } catch (error) {
+            successMessage.textContent = "Backend not running!";
+            successMessage.style.color = "red";
+        }
+    }
+});
+
+loadUsers();
+
+async function loadUsers() {
     try {
-        const response = await fetch("http://localhost:5000/api/register", {
-            method: "POST",
+        const response = await fetch("http://localhost:5000/api/users");
+
+        users = await response.json();   // Update state
+
+        displayUsers();
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+function displayUsers() {
+    const container = document.getElementById("usersList");
+    container.innerHTML = "";
+
+    users.forEach(user => {
+        container.innerHTML += `
+            <div>
+                <p>${user.name} - ${user.email} - ${user.phone}</p>
+                <button onclick="updateUser('${user._id}')">Update</button>
+                <button onclick="deleteUser('${user._id}')">Delete</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteUser(id) {
+    try {
+        await fetch(`http://localhost:5000/api/users/${id}`, {
+            method: "DELETE"
+        });
+
+        loadUsers();  // Refresh state
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async function updateUser(id) {
+
+    const newName = prompt("Enter new name:");
+    const newEmail = prompt("Enter new email:");
+    const newPhone = prompt("Enter new phone:");
+
+    try {
+        await fetch(`http://localhost:5000/api/users/${id}`, {
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                name: nameValue,
-                email: emailValue,
-                phone: phoneValue,
-                password: passwordValue
+                name: newName,
+                email: newEmail,
+                phone: newPhone
             })
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            successMessage.textContent = "Smart Validation Successful ✔ Data Saved!";
-            successMessage.style.color = "#16a34a";
-            document.getElementById("dataForm").reset();
-        } else {
-            successMessage.textContent = data.message || "Server Error";
-            successMessage.style.color = "red";
-        }
+        loadUsers();  // Refresh state
 
     } catch (error) {
-        successMessage.textContent = "Backend not running!";
-        successMessage.style.color = "red";
+        console.log(error);
     }
 }
-
-}});
