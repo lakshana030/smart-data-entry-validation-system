@@ -18,6 +18,8 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
 
     let isValid = true;
 
+    const loader = document.getElementById("loader");
+
     const nameInput = document.getElementById("name");
     const emailInput = document.getElementById("email");
     const phoneInput = document.getElementById("phone");
@@ -27,6 +29,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
     const emailError = document.getElementById("emailError");
     const phoneError = document.getElementById("phoneError");
     const passwordError = document.getElementById("passwordError");
+
     const successMessage = document.getElementById("successMessage");
 
     // Reset errors
@@ -46,14 +49,14 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
 
     const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
     if (!namePattern.test(nameValue)) {
-        nameError.textContent = "Name should contain only letters and single spaces";
+        nameError.textContent = "Name should contain only letters and spaces";
         nameInput.classList.add("error-border");
         isValid = false;
     }
 
     const emailValue = emailInput.value.trim();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(emailValue) || emailValue.includes("..")) {
+    if (!emailPattern.test(emailValue)) {
         emailError.textContent = "Enter valid email";
         emailInput.classList.add("error-border");
         isValid = false;
@@ -72,7 +75,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
     if (!passwordPattern.test(passwordValue)) {
-        passwordError.textContent = "Weak password format";
+        passwordError.textContent = "Weak password";
         passwordInput.classList.add("error-border");
         isValid = false;
     }
@@ -87,6 +90,10 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
         };
 
         try {
+
+            // SHOW LOADER
+            loader.style.display = "block";
+
             const response = await fetch("http://localhost:5000/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -95,34 +102,49 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
 
             const data = await response.json();
 
+            // HIDE LOADER
+            loader.style.display = "none";
+
             if (response.ok) {
-                successMessage.textContent = "Data Saved Successfully ✔";
+
+                successMessage.textContent = "User Registered Successfully ✔";
                 successMessage.style.color = "green";
+
                 document.getElementById("dataForm").reset();
-                loadUsers();  // refresh users
+
+                loadUsers();
+
             } else {
+
                 successMessage.textContent = data.message;
                 successMessage.style.color = "red";
+
             }
 
         } catch (error) {
-            successMessage.textContent = "Backend not running!";
+
+            loader.style.display = "none";
+
+            console.error(error);
+
+            successMessage.textContent = "Server error. Backend not running.";
             successMessage.style.color = "red";
+
         }
     }
 });
-
 // ===============================
 // LOAD USERS (WITH TOKEN)
 // ===============================
 loadUsers();
-
 async function loadUsers() {
+
     try {
+
         const token = localStorage.getItem("token");
 
         if (!token) {
-            console.log("Login required to fetch users");
+            console.log("Login required");
             return;
         }
 
@@ -132,31 +154,71 @@ async function loadUsers() {
             }
         });
 
+        if (!response.ok) {
+            throw new Error("Failed to fetch users");
+        }
+
         users = await response.json();
+
         displayUsers();
 
     } catch (error) {
-        console.log(error);
+
+        console.error("Error loading users:", error);
+
+        document.getElementById("usersList").innerHTML =
+            "<p style='color:red'>Failed to load users</p>";
+
     }
 }
-
 // ===============================
 // DISPLAY USERS
 // ===============================
 function displayUsers() {
+
     const container = document.getElementById("usersList");
-    container.innerHTML = "";
+
+    let html = "";
 
     users.forEach(user => {
-        container.innerHTML += `
-            <div>
+
+        html += `
+            <div class="user-item">
                 <p>${user.name} - ${user.email} - ${user.phone}</p>
                 <button onclick="updateUser(${user.id})">Update</button>
                 <button onclick="deleteUser(${user.id})">Delete</button>
             </div>
         `;
+
     });
+
+    container.innerHTML = html;
 }
+// ===============================
+// SEARCH USERS
+// ===============================
+
+const searchInput = document.getElementById("searchUser");
+
+searchInput.addEventListener("input", function () {
+
+    const value = this.value.toLowerCase();
+
+    const userItems = document.querySelectorAll(".user-item");
+
+    userItems.forEach(user => {
+
+        const text = user.textContent.toLowerCase();
+
+        if (text.includes(value)) {
+            user.style.display = "block";
+        } else {
+            user.style.display = "none";
+        }
+
+    });
+
+});
 
 // ===============================
 // DELETE USER
