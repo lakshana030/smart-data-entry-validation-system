@@ -94,7 +94,7 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
             // SHOW LOADER
             loader.style.display = "block";
 
-            const response = await fetch("http://localhost:5000/api/register", {
+            const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
@@ -106,6 +106,10 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
             loader.style.display = "none";
 
             if (response.ok) {
+                // Save the JWT token to local storage so the user can interact instantly
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                }
 
                 successMessage.textContent = "User Registered Successfully ✔";
                 successMessage.style.color = "green";
@@ -137,38 +141,23 @@ document.getElementById("dataForm").addEventListener("submit", async function (e
 // LOAD USERS (WITH TOKEN)
 // ===============================
 loadUsers();
+
 async function loadUsers() {
-
     try {
-
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            console.log("Login required");
-            return;
-        }
-
-        const response = await fetch("http://localhost:5000/api/users", {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
+        const response = await fetch("/api/users");
 
         if (!response.ok) {
             throw new Error("Failed to fetch users");
         }
 
         users = await response.json();
-
         displayUsers();
 
     } catch (error) {
-
         console.error("Error loading users:", error);
 
         document.getElementById("usersList").innerHTML =
             "<p style='color:red'>Failed to load users</p>";
-
     }
 }
 // ===============================
@@ -227,7 +216,7 @@ async function deleteUser(id) {
     try {
         const token = localStorage.getItem("token");
 
-        await fetch(`http://localhost:5000/api/users/${id}`, {
+        await fetch(`/api/users/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": "Bearer " + token
@@ -253,7 +242,7 @@ async function updateUser(id) {
     try {
         const token = localStorage.getItem("token");
 
-        await fetch(`http://localhost:5000/api/users/${id}`, {
+        await fetch(`/api/users/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
