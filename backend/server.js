@@ -30,6 +30,14 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/api", userRoutes);
 
 // ============================
+// 🎯 SPA FALLBACK ROUTE
+// ============================
+// Redirect any unhandled requests directly to the frontend's main index pool
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
+// ============================
 // 🌍 GLOBAL ERROR HANDLER
 // ============================
 app.use((err, req, res, next) => {
